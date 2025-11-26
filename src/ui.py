@@ -75,8 +75,9 @@ class MarkdownConverterApp:
     def __init__(self, page: ft.Page):
         self.page = page
         self.page.title = "Markdown to HTML Converter"
-        self.page.window_width = 1000
-        self.page.window_height = 800
+        self.page.window.width = 1000
+        self.page.window.height = 800
+        self.page.window.center()
         self.page.padding = 0
         self.page.bgcolor = "#f5f7fa"
         self.page.theme_mode = "light"
@@ -579,7 +580,6 @@ class MarkdownConverterApp:
 
 
 def main(page: ft.Page):
-    page.window.full_screen = True
     MarkdownConverterApp(page)
 
 
