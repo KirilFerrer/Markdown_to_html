@@ -477,7 +477,8 @@ class MarkdownConverterApp:
             except Exception as val_error:
                 console_msg = logging_utils.log_error("VALIDATOR", f"Validation failed: {str(val_error)}")
                 self.add_console_line(console_msg, "#ef4444")
-            
+                raise
+
             self.page.update()
             
             # GENERACIÓN HTML
@@ -525,9 +526,6 @@ class MarkdownConverterApp:
             self.convert_btn.bgcolor = "#10b981"
             
         except Exception as ex:
-            import traceback
-            error_trace = traceback.format_exc()
-            
             console_msg = logging_utils.log_critical("SYSTEM", f"Critical error: {str(ex)}")
             self.add_console_line(console_msg, "#ef4444")
             

@@ -50,7 +50,10 @@ def create_log_file(log_dir=None):
 def initialize_logging_system(log_dir=None):
     """Inicializa el sistema de logging y retorna la ruta del archivo de log"""
     global LOG_FILE_HANDLE, CURRENT_LOG_FILE
-    
+
+    if LOG_FILE_HANDLE and not LOG_FILE_HANDLE.closed:
+        return CURRENT_LOG_FILE
+
     if log_dir is None:
         log_dir = os.path.join(PROJECT_ROOT, "logs")
         
