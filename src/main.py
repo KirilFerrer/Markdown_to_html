@@ -1,5 +1,4 @@
 """CLI entry point and four-stage Markdown conversion pipeline."""
-import os
 import sys
 from datetime import datetime
 from pathlib import Path

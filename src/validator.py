@@ -134,27 +134,6 @@ def validate_image(node: Dict[str, Any], ctx: Dict[str, Any]) -> List[Dict[str, 
     return []
 
 
-def validate_text(node: Dict[str, Any], ctx: Dict[str, Any]) -> List[Dict[str, Any]]:
-    errors = []
-    
-    if node["type"] != "text":
-        return errors
-    
-    line = node.get("line", 0)
-    
-    # Literal text needs no additional validation.
-    
-    return errors
-
-
-def validate_hr(node: Dict[str, Any], ctx: Dict[str, Any]) -> List[Dict[str, Any]]:
-    return []
-
-
-def validate_document(node: Dict[str, Any], ctx: Dict[str, Any]) -> List[Dict[str, Any]]:
-    return []
-
-
 def _validate_node(node: Dict[str, Any], ctx: Dict[str, Any], errors: List[Dict[str, Any]]) -> None:
     node_type = node.get("type")
     validator = VALIDATORS.get(node_type)
@@ -204,8 +183,5 @@ VALIDATORS["list"] = validate_list
 VALIDATORS["list_item"] = validate_list_item
 VALIDATORS["paragraph"] = validate_paragraph
 VALIDATORS["code_block"] = validate_code_block
-VALIDATORS["text"] = validate_text
 VALIDATORS["link"] = validate_link
 VALIDATORS["image"] = validate_image
-VALIDATORS["hr"] = validate_hr
-VALIDATORS["document"] = validate_document

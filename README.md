@@ -29,7 +29,7 @@ python -m pip install -r requirements.txt
 python src/main.py --gui
 ~~~
 
-The UI provides file selection, CSS themes, validation messages and HTML export. The CLI still works when Flet is installed: a filename argument selects **CLI mode**, not the GUI.
+The GUI uses the Flet 0.23.x API (pinned in requirements.txt). The UI provides file selection, CSS themes, validation messages and HTML export. The CLI still works when Flet is installed: a filename argument selects **CLI mode**, not the GUI.
 
 ## Supported Markdown
 

@@ -1,7 +1,6 @@
 import flet as ft
 import os
 from pathlib import Path
-import logging
 from datetime import datetime
 import lexer
 import parser
@@ -11,65 +10,6 @@ import logging_utils
 import utils
 
 INITIAL_FILE = None
-
-class UITextHandler(logging.Handler):
-    """Handler personalizado para enviar logs al TextBox de la UI"""
-    def __init__(self, ui_app):
-        super().__init__()
-        self.ui_app = ui_app
-    
-    def emit(self, record):
-        try:
-            msg = self.format(record)
-            level = record.levelname
-            self.ui_app.add_log_message(msg, level)
-        except Exception:
-            pass
-
-def setup_logger(ui_app=None):
-    """Configura el logger para errores"""
-    # Determine project root (parent of src)
-    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    log_dir = os.path.join(project_root, "logs")
-    
-    os.makedirs(log_dir, exist_ok=True)
-    
-    log_file = os.path.join(log_dir, f"conversion_{datetime.now().strftime('%Y%m%d')}.log")
-    
-    logger = logging.getLogger("MarkdownConverter")
-    logger.setLevel(logging.DEBUG)
-    
-    # Evitar duplicados
-    if logger.handlers:
-        return logger
-    
-    # Handler para archivo
-    file_handler = logging.FileHandler(log_file, encoding='utf-8')
-    file_handler.setLevel(logging.DEBUG)
-    file_format = logging.Formatter(
-        '%(asctime)s - %(levelname)s - %(funcName)s:%(lineno)d - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
-    )
-    file_handler.setFormatter(file_format)
-    
-    # Handler para consola
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(logging.ERROR)
-    console_format = logging.Formatter('%(levelname)s: %(message)s')
-    console_handler.setFormatter(console_format)
-    
-    logger.addHandler(file_handler)
-    logger.addHandler(console_handler)
-    
-    # Handler para UI si está disponible
-    if ui_app:
-        ui_handler = UITextHandler(ui_app)
-        ui_handler.setLevel(logging.INFO)
-        ui_format = logging.Formatter('%(message)s')
-        ui_handler.setFormatter(ui_format)
-        logger.addHandler(ui_handler)
-    
-    return logger
 
 class MarkdownConverterApp:
     def __init__(self, page: ft.Page):
@@ -93,9 +33,6 @@ class MarkdownConverterApp:
         logging_utils.initialize_logging_system()
         
         self.setup_ui()
-        
-        # Configurar logger después de crear la UI para poder usar el TextBox
-        self.logger = setup_logger(self)
         
         if self.selected_file_path and os.path.exists(self.selected_file_path):
             self.load_initial_file()

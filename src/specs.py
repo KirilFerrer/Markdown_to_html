@@ -1,12 +1,12 @@
 # specs.py
-from typing import List, Tuple, Dict, Any, Optional, Callable
+from typing import Dict, Any, Callable
 import re
 import utils
 
-BLOCK_FLUSH_PRIORITY = ["HEADER", "CODE_BLOCK_END", "CODE_BLOCK_START", "HORIZONTAL_RULE", "UNORDERED_LIST_ITEM", "ORDERED_LIST_ITEM", "BLANK_LINE", "PARAGRAPH"]
+BLOCK_FLUSH_PRIORITY = ["HEADER", "HORIZONTAL_RULE", "UNORDERED_LIST_ITEM", "ORDERED_LIST_ITEM", "BLANK_LINE", "PARAGRAPH"]
 
 INLINE_TOKEN_PATTERNS = {
-    "IMAGE"         : r"!\[(?P<alt>.+?)\]\((?P<url>[^)]+?)\)",            # ![alt](url)
+    "IMAGE"         : r"!\[(?P<alt>.*?)\]\((?P<url>[^)]+?)\)",            # ![alt](url)
     "LINK"          : r"\[(?P<text>.+?)\]\((?P<url>[^)]+?)\)",            # [text](url)
     "CODE_INLINE"   : r"`(?P<content>[^`]+?)`",                           # `code`
     "STRONG"        : r"\*\*(?P<content>.+?)\*\*",                       # **text**
@@ -17,8 +17,6 @@ INLINE_FLUSH_PRIORITY = ["IMAGE", "LINK", "CODE_INLINE", "STRONG", "EMPHASIS"]
 
 TOKEN_PATTERNS = {
     "HEADER"             : r"^(?P<level>#{1,6})\s+(?P<content>.*)$",                    # # heading
-    "CODE_BLOCK_END"     : r"^```\s*$",                                                 # ``` close
-    "CODE_BLOCK_START"   : r"^```(?P<language>\w+)\s*$",                                 # ``` open
     "HORIZONTAL_RULE"    : r"^(?P<rule>-{3,}|\*{3,}|_{3,})\s*$",                       # ---
     "UNORDERED_LIST_ITEM": r"^(?P<indent>\s*)(?P<marker>[-*+])\s+(?P<content>.*)$",     # - item
     "ORDERED_LIST_ITEM"  : r"^(?P<indent>\s*)(?P<number>\d+)\.\s+(?P<content>.*)$",     # 1. item
@@ -30,9 +28,6 @@ META_TRANSFORMS: Dict[str, Dict[str, Callable]] = {
     "HEADER": {
         "level": utils.transform_level,
         "content": utils.transform_identity,
-    },
-    "CODE_BLOCK_START": {
-        "language": utils.transform_identity,  # Mantener como string o None
     },
     "HORIZONTAL_RULE": {
         "rule": utils.transform_normalize_rule,
