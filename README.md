@@ -1,7 +1,5 @@
 # Markdown to HTML Converter
 
-[![Tests](https://github.com/CPX-001/Markdown_to_html/actions/workflows/ci.yml/badge.svg)](https://github.com/CPX-001/Markdown_to_html/actions/workflows/ci.yml)
-
 A small **Markdown-to-HTML converter with its own lexer, parser, AST, validation rules and HTML renderer**. It can be used from the command line or through a Flet desktop interface.
 
 I developed the conversion engine during my Python specialization course, before working with object-oriented programming. The core intentionally uses functions, dictionaries and lists rather than a class hierarchy. The UI is a separate layer.
@@ -88,14 +86,6 @@ The GUI offers bundled CSS styles from `css/`. Their relative paths are intended
 
 Generated documents, logs and compiled files are excluded from version control.
 
-## Test and review
-
-~~~bash
-python -m unittest discover -s tests -p "test_*.py" -v
-python -m compileall -q src
-~~~
-
-GitHub Actions repeats these checks for pushes and pull requests. The automated suite covers HTML output, AST isolation, fenced code, inline Markdown, validation rules, URL safety and command-line usage. The graphical UI is not exercised by headless tests.
 
 ## Intentional limitations
 
