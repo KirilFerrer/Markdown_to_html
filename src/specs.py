@@ -3,9 +3,7 @@ from typing import List, Tuple, Dict, Any, Optional, Callable
 import re
 import utils
 
-TOKEN_PATTERNS_NAMES = ["HEADER", "CODE_BLOCK_END", "CODE_BLOCK_START", "HORIZONTAL_RULE", "UNORDERED_LIST_ITEM", "ORDERED_LIST_ITEM", "BLANK_LINE", "PARAGRAPH"]
 BLOCK_FLUSH_PRIORITY = ["HEADER", "CODE_BLOCK_END", "CODE_BLOCK_START", "HORIZONTAL_RULE", "UNORDERED_LIST_ITEM", "ORDERED_LIST_ITEM", "BLANK_LINE", "PARAGRAPH"]
-NODES = ["DOCUMENT", "HEADER"]
 
 INLINE_TOKEN_PATTERNS = {
     "IMAGE"         : r"!\[(?P<alt>.+?)\]\((?P<url>[^)]+?)\)",            # ![alt](url)
@@ -18,12 +16,12 @@ INLINE_TOKEN_PATTERNS = {
 INLINE_FLUSH_PRIORITY = ["IMAGE", "LINK", "CODE_INLINE", "STRONG", "EMPHASIS"]
 
 TOKEN_PATTERNS = {
-    "HEADER"             : r"^(?P<level>#{1,6})\s+(?P<content>.+)$",                    # # heading
+    "HEADER"             : r"^(?P<level>#{1,6})\s+(?P<content>.*)$",                    # # heading
     "CODE_BLOCK_END"     : r"^```\s*$",                                                 # ``` close
     "CODE_BLOCK_START"   : r"^```(?P<language>\w+)\s*$",                                 # ``` open
     "HORIZONTAL_RULE"    : r"^(?P<rule>-{3,}|\*{3,}|_{3,})\s*$",                       # ---
-    "UNORDERED_LIST_ITEM": r"^(?P<indent>\s*)(?P<marker>[-*+])\s+(?P<content>.+)$",     # - item
-    "ORDERED_LIST_ITEM"  : r"^(?P<indent>\s*)(?P<number>\d+)\.\s+(?P<content>.+)$",     # 1. item
+    "UNORDERED_LIST_ITEM": r"^(?P<indent>\s*)(?P<marker>[-*+])\s+(?P<content>.*)$",     # - item
+    "ORDERED_LIST_ITEM"  : r"^(?P<indent>\s*)(?P<number>\d+)\.\s+(?P<content>.*)$",     # 1. item
     "BLANK_LINE"         : r"^\s*$",                                                     # empty
     "PARAGRAPH"          : r"^(?P<content>.+)$",                                         # text
 }

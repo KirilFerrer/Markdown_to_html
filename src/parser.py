@@ -8,11 +8,6 @@ from datetime import datetime
 from typing import List, Dict, Any
 from specs import TOKEN_GROUPING_STRATEGY
 
-ROOT_NODE = {
-    "type": "document",
-    "children": []
-}
-
 def count_nodes(node: Dict[str, Any]) -> int:
     """Cuenta recursivamente el número de nodos en el AST"""
     count = 1
@@ -35,7 +30,8 @@ def parse(tokens: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 
 def consume_tokens(tokens: List[Dict[str, Any]]) -> Dict[str, Any]:
-    document = ROOT_NODE
+    # Each conversion must own a fresh document, not reuse module-level children.
+    document = {"type": "document", "children": []}
     
     # Buffers para acumulación
     paragraph_buffer: List[Dict[str, Any]] = []
@@ -68,20 +64,15 @@ def consume_tokens(tokens: List[Dict[str, Any]]) -> Dict[str, Any]:
                 paragraph_buffer, list_buffer, current_list_type = flush_buffer("list", document, paragraph_buffer, list_buffer, current_list_type)
         
         if code_block_state["active"]:
-            if strategy_type == "stateful" and token_type == strategy.get("end_token"):
-                lang = code_block_state["start_token"]["meta"].get("language", "") if code_block_state["start_token"] else ""
-                node = make_code_block(lang, code_block_state["content"], code_block_state["start_token"])
-                
-                document["children"].append(node)
-                code_block_state["active"] = False
-                code_block_state["start_token"] = None
-                code_block_state["content"] = []
+            if token_type == "CODE_BLOCK_END":
+                start = code_block_state["start_token"]
+                lang = start["meta"].get("language", "") if start else ""
+                document["children"].append(make_code_block(lang, code_block_state["content"], start))
+                code_block_state = {"active": False, "start_token": None, "content": []}
             else:
-                if "content" in token.get("meta", {}):
-                    code_block_state["content"].append(token["meta"]["content"])
-                else:
-                    code_block_state["content"].append("")
-                continue
+                # CODE_CONTENT keeps the entire original line, including # and list markers.
+                code_block_state["content"].append(token.get("meta", {}).get("content", ""))
+            continue
         
         # o2o
         if strategy_type == "o2o":
@@ -144,7 +135,8 @@ def consume_tokens(tokens: List[Dict[str, Any]]) -> Dict[str, Any]:
         node = make_code_block(
             lang,
             code_block_state["content"],
-            code_block_state["start_token"]
+            code_block_state["start_token"],
+            closed=False,
         )
         document["children"].append(node)
     
@@ -172,6 +164,35 @@ def flush_buffer(buffer_type: str, document: Dict[str, Any],
     return paragraph_buffer, list_buffer, current_list_type
 
 
+def make_inline_nodes(content: str, line: int) -> List[Dict[str, Any]]:
+    """Convert inline tokens to AST nodes without classes or hidden shared state.
+
+    Supported syntax is deliberately a subset of Markdown: one inline level,
+    links, images, bold, emphasis and inline code.
+    """
+    nodes: List[Dict[str, Any]] = []
+    for token in lexer.tokenize_inline(content, line):
+        kind, meta = token["type"], token["meta"]
+        if kind == "TEXT":
+            nodes.append({"type": "text", "value": meta["content"], "line": line})
+        elif kind == "CODE_INLINE":
+            nodes.append({"type": "code_inline", "value": meta["content"], "line": line})
+        elif kind in ("STRONG", "EMPHASIS"):
+            nodes.append({
+                "type": kind.lower(),
+                "line": line,
+                "children": [{"type": "text", "value": meta["content"], "line": line}],
+            })
+        elif kind == "LINK":
+            nodes.append({
+                "type": "link", "url": meta["url"], "line": line,
+                "children": [{"type": "text", "value": meta["text"], "line": line}],
+            })
+        elif kind == "IMAGE":
+            nodes.append({"type": "image", "url": meta["url"], "alt": meta["alt"], "line": line})
+    return nodes
+
+
 def make_heading(token: Dict[str, Any]) -> Dict[str, Any]:
     level = token["meta"]["level"]
     content = token["meta"].get("content", "")
@@ -182,7 +203,7 @@ def make_heading(token: Dict[str, Any]) -> Dict[str, Any]:
         "level": level,
         "line": line,
         "children": [
-            {"type": "text", "value": content, "line": line}
+            *make_inline_nodes(content, line)
         ]
     }
 
@@ -202,7 +223,7 @@ def make_paragraph(buffer: List[Dict[str, Any]]) -> Dict[str, Any]:
         "type": "paragraph",
         "line": line_num,
         "children": [
-            {"type": "text", "value": content, "line": line_num}
+            *make_inline_nodes(content, line_num)
         ]
     }
 
@@ -227,7 +248,7 @@ def make_list(buffer: List[Dict[str, Any]], list_type: str | None) -> Dict[str, 
             "type": "list_item",
             "line": item_line,
             "children": [
-                {"type": "text", "value": content, "line": item_line}
+                *make_inline_nodes(content, item_line)
             ]
         }
         items.append(item)
@@ -240,14 +261,20 @@ def make_list(buffer: List[Dict[str, Any]], list_type: str | None) -> Dict[str, 
     }
 
 
-def make_code_block(lang: str, content_lines: List[str], start_token: Dict[str, Any] | None = None) -> Dict[str, Any]:
+def make_code_block(
+    lang: str,
+    content_lines: List[str],
+    start_token: Dict[str, Any] | None = None,
+    closed: bool = True,
+) -> Dict[str, Any]:
     line_num = start_token.get("line", 0) if start_token else 0
     return {
         "type": "code_block",
         "line": line_num,
         "meta": {
             "lang": lang or "",
-            "content": "\n".join(content_lines)
+            "content": "\n".join(content_lines),
+            "closed": closed,
         },
         "children": []
     }
@@ -271,7 +298,7 @@ def save_ast_to_file(ast: Dict[str, Any], output_dir: str = None) -> str:
     try:
         os.makedirs(output_dir, exist_ok=True)
         
-        date_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+        date_str = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
         filename = f"ast_{date_str}.json"
         filepath = os.path.join(output_dir, filename)
         
