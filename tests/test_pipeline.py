@@ -11,7 +11,6 @@ sys.path.insert(0, str(ROOT / "src"))
 import lexer  # noqa: E402
 import parser  # noqa: E402
 import renderer  # noqa: E402
-import utils  # noqa: E402
 import validator  # noqa: E402
 
 

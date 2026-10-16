@@ -1,6 +1,5 @@
 import os
 from datetime import datetime
-from typing import Optional
 
 
 LOG_FILE_HANDLE = None
