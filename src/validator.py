@@ -1,5 +1,6 @@
 from specs import VALIDATION_RULES, VALIDATION_CONSTRAINTS
 import logging_utils
+import utils
 from typing import List, Dict, Any, Callable
 
 # Dispatch table: mapea tipos de nodo a sus funciones de validación
@@ -17,19 +18,12 @@ def create_error(error_code: str, line: int = 0) -> Dict[str, Any]:
 
 
 def has_text_content(node: Dict[str, Any]) -> bool:
-    children = node.get("children", [])
-    
-    for child in children:
-        if child.get("type") == "text":
-            value = child.get("value", "").strip()
-            if value:
-                return True
-    
-    return False
-
-
-def has_inline_content(text_value: str) -> bool:
-    return bool(text_value.strip())
+    """Styled inline children and image alt text also count as content."""
+    if node.get("type") in {"text", "code_inline"}:
+        return bool(str(node.get("value", "")).strip())
+    if node.get("type") == "image":
+        return bool(str(node.get("alt", "")).strip())
+    return any(has_text_content(child) for child in node.get("children", []))
 
 
 def validate_heading(node: Dict[str, Any], ctx: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -122,11 +116,22 @@ def validate_code_block(node: Dict[str, Any], ctx: Dict[str, Any]) -> List[Dict[
     if not content or not content.strip():
         errors.append(create_error("MD010", line))
     
-    # MD004: code-block-closed
-    # Nota: Si el code_block existe en el AST, significa que fue cerrado correctamente
-    # por el parser. Esta validación es informativa.
+    if not meta.get("closed", True):
+        errors.append(create_error("MD004", line))
     
     return errors
+
+
+def validate_link(node: Dict[str, Any], ctx: Dict[str, Any]) -> List[Dict[str, Any]]:
+    if not utils.is_safe_url(node.get("url", "")):
+        return [create_error("MD008", node.get("line", 0))]
+    return []
+
+
+def validate_image(node: Dict[str, Any], ctx: Dict[str, Any]) -> List[Dict[str, Any]]:
+    if not utils.is_safe_url(node.get("url", "")):
+        return [create_error("MD009", node.get("line", 0))]
+    return []
 
 
 def validate_text(node: Dict[str, Any], ctx: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -137,9 +142,7 @@ def validate_text(node: Dict[str, Any], ctx: Dict[str, Any]) -> List[Dict[str, A
     
     line = node.get("line", 0)
     
-    # Nota: Los links e imágenes se procesan durante el parsing
-    # Esta validación es un placeholder para cuando se implemente
-    # el procesamiento de inline elements
+    # Literal text needs no additional validation.
     
     return errors
 
@@ -171,17 +174,11 @@ def iterate_ast(node: Dict[str, Any], ctx: Dict[str, Any], errors: List[Dict[str
         iterate_ast(child, ctx, errors)
 
 
-def validate(ast: Dict[str, Any], rules: Dict[str, Dict[str, Any]] | None = None) -> List[Dict[str, Any]]:
+def validate(ast: Dict[str, Any]) -> List[Dict[str, Any]]:
     logging_utils.log_info("VALIDATOR", "Starting document validation", "validate")
     
     errors: List[Dict[str, Any]] = []
-    ctx: Dict[str, Any] = {
-        "previous_heading_level": 0,
-        "parent": None,
-        "depth": 0,
-        "in_list": False,
-        "in_code_block": False
-    }
+    ctx: Dict[str, Any] = {"previous_heading_level": 0}
     
     try:
         iterate_ast(ast, ctx, errors)
@@ -208,5 +205,7 @@ VALIDATORS["list_item"] = validate_list_item
 VALIDATORS["paragraph"] = validate_paragraph
 VALIDATORS["code_block"] = validate_code_block
 VALIDATORS["text"] = validate_text
+VALIDATORS["link"] = validate_link
+VALIDATORS["image"] = validate_image
 VALIDATORS["hr"] = validate_hr
 VALIDATORS["document"] = validate_document

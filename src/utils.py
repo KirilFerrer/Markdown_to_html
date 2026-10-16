@@ -1,4 +1,5 @@
 from typing import Any
+from urllib.parse import urlsplit
 import os
 
 def read_lines(file_name):
@@ -85,15 +86,22 @@ def list_css_files(css_dir: str = None) -> list[str]:
     return css_files
 
 
-def get_css_path(css_name: str, css_dir: str = "css") -> str:
-    """
-    Obtiene la ruta relativa del archivo CSS para usar en HTML
-    
-    Args:
-        css_name: Nombre del archivo CSS (sin extensión)
-        css_dir: Directorio base donde se encuentran los archivos CSS
-        
-    Returns:
-        Ruta relativa al archivo CSS desde HTML_GEN hacia css
-    """
+def get_css_path(css_name: str) -> str:
+    """Return an existing bundled style, never an arbitrary local file path."""
+    if css_name not in list_css_files():
+        raise ValueError(f"Unknown CSS style: {css_name}")
     return f"../css/{css_name}.css"
+
+
+def is_safe_url(url: str) -> bool:
+    """Only allow ordinary relative links or safe URL schemes in generated HTML."""
+    if not isinstance(url, str) or not url.strip():
+        return False
+    candidate = url.strip()
+    if candidate.startswith("//") or any(char.isspace() for char in candidate):
+        return False
+    parsed = urlsplit(candidate)
+    if parsed.scheme:
+        return parsed.scheme.lower() in {"http", "https", "mailto"}
+    # Relative URLs and #anchors are fine; do not allow colon-based oddities.
+    return ":" not in candidate.split("/", 1)[0]
