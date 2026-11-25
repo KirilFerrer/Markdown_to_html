@@ -9,8 +9,7 @@ CURRENT_LOG_FILE = None
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def ensure_directories_exist():
-    """Crea las carpetas necesarias si no existen"""
-    # Las carpetas van en la raíz del proyecto
+    """Create the output and log directories if they do not exist."""
     directories = [
         os.path.join(PROJECT_ROOT, "AST_GEN"),
         os.path.join(PROJECT_ROOT, "HTML_GEN"),
@@ -23,17 +22,17 @@ def ensure_directories_exist():
 
 
 def get_log_timestamp():
-    """Obtiene timestamp formateado para logs"""
+    """Return a timestamp for log file entries."""
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
 def get_short_timestamp():
-    """Obtiene timestamp corto para consola"""
+    """Return a short timestamp for console messages."""
     return datetime.now().strftime("%H:%M:%S")
 
 
 def create_log_file(log_dir=None):
-    """Crea y retorna la ruta del archivo de log diario"""
+    """Return the path to the daily log file."""
     if log_dir is None:
         log_dir = os.path.join(PROJECT_ROOT, "logs")
         
@@ -47,7 +46,7 @@ def create_log_file(log_dir=None):
 
 
 def initialize_logging_system(log_dir=None):
-    """Inicializa el sistema de logging y retorna la ruta del archivo de log"""
+    """Open the log file and return its path."""
     global LOG_FILE_HANDLE, CURRENT_LOG_FILE
 
     if LOG_FILE_HANDLE and not LOG_FILE_HANDLE.closed:
@@ -59,10 +58,9 @@ def initialize_logging_system(log_dir=None):
     ensure_directories_exist()
     CURRENT_LOG_FILE = create_log_file(log_dir)
     
-    # Abrir archivo en modo append
     LOG_FILE_HANDLE = open(CURRENT_LOG_FILE, "a", encoding="utf-8")
     
-    # Escribir separador de sesión
+    # Start a new log session.
     separator = "\n" + "="*80 + "\n"
     session_start = f"SESSION STARTED: {get_log_timestamp()}\n"
     LOG_FILE_HANDLE.write(separator)
@@ -74,7 +72,7 @@ def initialize_logging_system(log_dir=None):
 
 
 def close_logging_system():
-    """Cierra el sistema de logging"""
+    """Close the active log file."""
     global LOG_FILE_HANDLE
     
     if LOG_FILE_HANDLE:
@@ -89,14 +87,14 @@ def close_logging_system():
 
 
 def write_log_to_file(level, stage, message, function_name=None, line_number=None):
-    """Escribe log completo al archivo
+    """Write a log entry to the active file.
     
     Args:
-        level: Nivel de log (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-        stage: Etapa del pipeline (LEXER, PARSER, VALIDATOR, RENDERER, etc.)
-        message: Mensaje del log
-        function_name: Nombre de la función que genera el log (opcional)
-        line_number: Número de línea (opcional)
+        level: Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL).
+        stage: Pipeline stage, such as LEXER, PARSER, VALIDATOR or RENDERER.
+        message: Log message.
+        function_name: Name of the calling function, if supplied.
+        line_number: Source line number, if supplied.
     """
     global LOG_FILE_HANDLE
     
@@ -105,7 +103,6 @@ def write_log_to_file(level, stage, message, function_name=None, line_number=Non
     
     timestamp = get_log_timestamp()
     
-    # Formato completo para archivo
     log_parts = [timestamp, level.ljust(8), stage.ljust(12)]
     
     if function_name:
@@ -123,19 +120,18 @@ def write_log_to_file(level, stage, message, function_name=None, line_number=Non
 
 
 def format_console_log(level, stage, message):
-    """Formatea log reducido para consola UI (estilo IDE)
+    """Format a short log message for the UI console.
     
     Args:
-        level: Nivel de log (INFO, WARNING, ERROR, etc.)
-        stage: Etapa del pipeline (LEXER, PARSER, etc.)
-        message: Mensaje breve
+        level: Log level.
+        stage: Pipeline stage.
+        message: Message to display.
     
     Returns:
-        str: Log formateado estilo IDE
+        str: Formatted console message.
     """
     timestamp = get_short_timestamp()
     
-    # Formato reducido para consola tipo IDE
     if level == "ERROR" or level == "CRITICAL":
         return f"[{timestamp}] [{stage}] ERROR: {message}"
     elif level == "WARNING":
@@ -145,44 +141,44 @@ def format_console_log(level, stage, message):
 
 
 def log_info(stage, message, function_name=None, line_number=None):
-    """Log nivel INFO"""
+    """Log an informational message."""
     write_log_to_file("INFO", stage, message, function_name, line_number)
     return format_console_log("INFO", stage, message)
 
 
 def log_debug(stage, message, function_name=None, line_number=None):
-    """Log nivel DEBUG"""
+    """Log a debug message."""
     write_log_to_file("DEBUG", stage, message, function_name, line_number)
     return format_console_log("DEBUG", stage, message)
 
 
 def log_warning(stage, message, function_name=None, line_number=None):
-    """Log nivel WARNING"""
+    """Log a warning."""
     write_log_to_file("WARNING", stage, message, function_name, line_number)
     return format_console_log("WARNING", stage, message)
 
 
 def log_error(stage, message, function_name=None, line_number=None):
-    """Log nivel ERROR"""
+    """Log an error."""
     write_log_to_file("ERROR", stage, message, function_name, line_number)
     return format_console_log("ERROR", stage, message)
 
 
 def log_critical(stage, message, function_name=None, line_number=None):
-    """Log nivel CRITICAL"""
+    """Log a critical error."""
     write_log_to_file("CRITICAL", stage, message, function_name, line_number)
     return format_console_log("CRITICAL", stage, message)
 
 
 def log_pipeline_start(filename):
-    """Log de inicio de pipeline de conversión"""
+    """Log the start of a conversion."""
     message = f"Starting conversion pipeline for file: {filename}"
     write_log_to_file("INFO", "PIPELINE", message)
     return format_console_log("INFO", "PIPELINE", f"Starting conversion: {os.path.basename(filename)}")
 
 
 def log_pipeline_end(success=True):
-    """Log de fin de pipeline de conversión"""
+    """Log the result of a conversion."""
     if success:
         message = "Conversion pipeline completed successfully"
         write_log_to_file("INFO", "PIPELINE", message)

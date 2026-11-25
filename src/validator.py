@@ -3,7 +3,7 @@ import logging_utils
 import utils
 from typing import List, Dict, Any, Callable
 
-# Dispatch table: mapea tipos de nodo a sus funciones de validación
+# Map node types to their validators.
 VALIDATORS: Dict[str, Callable[[Dict[str, Any], Dict[str, Any]], List[Dict[str, Any]]]] = {}
 
 
@@ -49,7 +49,7 @@ def validate_heading(node: Dict[str, Any], ctx: Dict[str, Any]) -> List[Dict[str
     if not has_text_content(node):
         errors.append(create_error("MD003", line))
     
-    # Actualizar contexto
+    # Update the heading context.
     ctx["previous_heading_level"] = level
     
     return errors
@@ -144,10 +144,10 @@ def _validate_node(node: Dict[str, Any], ctx: Dict[str, Any], errors: List[Dict[
 
 
 def iterate_ast(node: Dict[str, Any], ctx: Dict[str, Any], errors: List[Dict[str, Any]]) -> None:
-    # Validar nodo actual
+    # Validate the current node.
     _validate_node(node, ctx, errors)
     
-    # Recorrer hijos recursivamente
+    # Visit child nodes recursively.
     children = node.get("children", [])
     for child in children:
         iterate_ast(child, ctx, errors)
@@ -177,7 +177,7 @@ def validate(ast: Dict[str, Any]) -> List[Dict[str, Any]]:
         raise
 
 
-# Registrar validadores en el dispatch table
+# Register node validators.
 VALIDATORS["heading"] = validate_heading
 VALIDATORS["list"] = validate_list
 VALIDATORS["list_item"] = validate_list_item

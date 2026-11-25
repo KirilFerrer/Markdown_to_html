@@ -26,9 +26,9 @@ class MarkdownConverterApp:
         self.selected_file_path = INITIAL_FILE
         self.generated_html = None
         self.ast = None
-        self.selected_css = None  # CSS seleccionado
+        self.selected_css = None  # Selected stylesheet.
         
-        # Inicializar sistema de logging
+        # Initialize logging.
         logging_utils.ensure_directories_exist()
         logging_utils.initialize_logging_system()
         
@@ -38,7 +38,7 @@ class MarkdownConverterApp:
             self.load_initial_file()
     
     def setup_ui(self):
-        # Textos y controles
+        # UI controls.
         self.file_path_text = ft.Text(
             "[SYSTEM] No file selected",
             size=13,
@@ -82,7 +82,7 @@ class MarkdownConverterApp:
             tooltip="Save HTML file"
         )
         
-        # Consola de salida tipo terminal
+        # Terminal-style console.
         self.console_lines = ft.Column(
             [],
             scroll=ft.ScrollMode.AUTO,
@@ -135,8 +135,8 @@ class MarkdownConverterApp:
         )
         
         
-        # Dropdown para selección de CSS
-        # Obtener ruta absoluta a la carpeta css
+        # Stylesheet selector.
+        # Resolve the CSS directory.
         current_dir = os.path.dirname(os.path.abspath(__file__))
         css_dir = os.path.join(os.path.dirname(current_dir), "css")
         
@@ -151,7 +151,7 @@ class MarkdownConverterApp:
             on_change=self.on_css_change
         )
         
-        # Card para selección de archivo
+        # File selection card.
         file_section = ft.Container(
             content=ft.Column([
                 ft.Row([
@@ -174,7 +174,7 @@ class MarkdownConverterApp:
             border_radius=12,
         )
         
-        # Card para conversión
+        # Conversion card.
         convert_section = ft.Container(
             content=ft.Column([
                 ft.Row([
@@ -197,7 +197,7 @@ class MarkdownConverterApp:
             border_radius=12,
         )
         
-        # Card para consola de salida
+        # Console card.
         output_section = ft.Container(
             content=ft.Column([
                 ft.Row([
@@ -221,7 +221,7 @@ class MarkdownConverterApp:
                     color="#1e293b"
                 ),
                 ft.Text(
-                    "Convierte archivos Markdown a HTML con validación",
+                    "Convert Markdown files to HTML with validation",
                     size=14,
                     color="#64748b",
                     weight="normal"
@@ -231,7 +231,7 @@ class MarkdownConverterApp:
             alignment=ft.alignment.center
         )
         
-        # Container principal centrado con scroll
+        # Main scrollable container.
         main_content = ft.Container(
             content=ft.Column([
                 header,
@@ -256,11 +256,11 @@ class MarkdownConverterApp:
             )
         )
         
-        # Asegurar que la página tenga scroll
+        # Enable page scrolling.
         self.page.scroll = ft.ScrollMode.AUTO
     
     def add_console_line(self, text: str, color: str = "#e5e7eb", prefix: str = ""):
-        """Añade una línea a la consola visual"""
+        """Append a line to the console."""
         row_controls = []
         if prefix:
             row_controls.append(ft.Text(prefix, color="#6b7280", size=12))
@@ -273,11 +273,11 @@ class MarkdownConverterApp:
         self.console_lines.controls.append(line)
     
     def clear_console(self):
-        """Limpia la consola visual"""
+        """Clear the console."""
         self.console_lines.controls.clear()
     
     def add_log_message(self, message: str, level: str = "INFO"):
-        """Añade un mensaje a la consola visual con formato de log profesional"""
+        """Append a formatted log message to the console."""
         timestamp = datetime.now().strftime("%H:%M:%S")
         color_map = {
             "DEBUG": "#9ca3af",
@@ -327,7 +327,7 @@ class MarkdownConverterApp:
         )
     
     def on_css_change(self, e):
-        """Maneja el cambio de selección de CSS"""
+        """Handle stylesheet selection changes."""
         if e.control.value == "none":
             self.selected_css = None
             console_msg = logging_utils.log_info("SYSTEM", "CSS style removed")
@@ -355,7 +355,7 @@ class MarkdownConverterApp:
         try:
             self.clear_console()
             
-            # TOKENIZACIÓN
+            # Tokenization
             try:
                 tokens = lexer.tokenize(self.selected_file_path)
                 tokens_list = list(tokens)
@@ -368,7 +368,7 @@ class MarkdownConverterApp:
                 self.add_console_line(console_msg, "#ef4444")
                 raise
             
-            # PARSING
+            # Parsing
             try:
                 self.ast = parser.parse(tokens_list)
                 console_msg = logging_utils.log_info("PARSER", "AST generation completed")
@@ -379,7 +379,7 @@ class MarkdownConverterApp:
                 self.add_console_line(console_msg, "#ef4444")
                 raise
             
-            # GUARDAR AST
+            # Save the AST
             try:
                 ast_path = parser.save_ast_to_file(self.ast)
                 console_msg = logging_utils.log_info("PARSER", f"AST saved: {os.path.basename(ast_path)}")
@@ -389,7 +389,7 @@ class MarkdownConverterApp:
                 console_msg = logging_utils.log_warning("PARSER", f"Failed to save AST: {str(ast_error)}")
                 self.add_console_line(console_msg, "#f59e0b")
             
-            # VALIDACIÓN
+            # Validation
             try:
                 errors = validator.validate(self.ast)
                 
@@ -399,7 +399,7 @@ class MarkdownConverterApp:
                     console_msg = logging_utils.log_warning("VALIDATOR", f"Validation completed: {error_count} errors, {warning_count} warnings")
                     self.add_console_line(console_msg, "#f59e0b")
                     
-                    # Mostrar TODOS los errores
+                    # Display all diagnostics.
                     for error in errors:
                         severity = error.get('severity', 'ERROR').upper()
                         code = error.get('code', 'UNKNOWN')
@@ -418,7 +418,7 @@ class MarkdownConverterApp:
 
             self.page.update()
             
-            # GENERACIÓN HTML
+            # HTML generation
             try:
                 self.generated_html = renderer.to_html(self.ast, css_file=self.selected_css)
                 html_size = len(self.generated_html)
@@ -429,9 +429,9 @@ class MarkdownConverterApp:
                 self.add_console_line(console_msg, "#ef4444")
                 raise
             
-            # GUARDAR HTML AUTOMÁTICAMENTE EN HTML_GEN
+            # Save HTML to HTML_GEN.
             try:
-                # Usar ruta absoluta para HTML_GEN en la raíz del proyecto
+                # Resolve the output directory from the project root.
                 current_dir = os.path.dirname(os.path.abspath(__file__))
                 project_root = os.path.dirname(current_dir)
                 html_gen_dir = os.path.join(project_root, "HTML_GEN")
@@ -451,7 +451,7 @@ class MarkdownConverterApp:
                 console_msg = logging_utils.log_warning("SYSTEM", f"Failed to auto-save HTML: {str(save_error)}")
                 self.add_console_line(console_msg, "#f59e0b")
             
-            # ÉXITO
+            # Conversion complete.
             console_msg = logging_utils.log_pipeline_end(success=True)
             self.add_console_line(console_msg, "#10b981")
             self.progress_bar.visible = False

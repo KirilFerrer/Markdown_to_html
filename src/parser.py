@@ -9,7 +9,7 @@ from typing import List, Dict, Any
 from specs import TOKEN_GROUPING_STRATEGY
 
 def count_nodes(node: Dict[str, Any]) -> int:
-    """Cuenta recursivamente el número de nodos en el AST"""
+    """Count AST nodes recursively."""
     count = 1
     if "children" in node:
         for child in node["children"]:
@@ -33,27 +33,26 @@ def consume_tokens(tokens: List[Dict[str, Any]]) -> Dict[str, Any]:
     # Each conversion must own a fresh document, not reuse module-level children.
     document = {"type": "document", "children": []}
     
-    # Buffers para acumulación
+    # Buffers for consecutive paragraph and list tokens.
     paragraph_buffer: List[Dict[str, Any]] = []
     list_buffer: List[Dict[str, Any]] = []
     
-    # Estado para code blocks
+    # Track an open fenced code block.
     code_block_state: Dict[str, Any] = {
         "active": False,
         "start_token": None,
         "content": []
     }
     
-    # Tipo de buffer activo para series (para detectar cambios de tipo)
+    # Track the current list type to detect changes.
     current_list_type: str | None = None
     
-    # Consumir tokens de la lista
     for token in tokens:
         token_type = token["type"]
         strategy = TOKEN_GROUPING_STRATEGY.get(token_type, {})
         strategy_type = strategy.get("type")
         
-        # Verificar buffers activos
+        # Flush buffers when the token type changes.
         if paragraph_buffer:
             if token_type != "PARAGRAPH":
                 paragraph_buffer, list_buffer, current_list_type = flush_buffer("paragraph", document, paragraph_buffer, list_buffer, current_list_type)
@@ -74,7 +73,7 @@ def consume_tokens(tokens: List[Dict[str, Any]]) -> Dict[str, Any]:
                 code_block_state["content"].append(token.get("meta", {}).get("content", ""))
             continue
         
-        # o2o
+        # One token to one node.
         if strategy_type == "o2o":
             paragraph_buffer, list_buffer, current_list_type = flush_buffer("all", document, paragraph_buffer, list_buffer, current_list_type)
             node_type = strategy.get("node_type")
@@ -88,7 +87,7 @@ def consume_tokens(tokens: List[Dict[str, Any]]) -> Dict[str, Any]:
             
             document["children"].append(node)
         
-        # m2o
+        # Multiple tokens to one node.
         elif strategy_type == "m2o":
             paragraph_buffer, list_buffer, current_list_type = flush_buffer("list", document, paragraph_buffer, list_buffer, current_list_type)
             buffer_token = strategy.get("buffer_token")
@@ -98,7 +97,7 @@ def consume_tokens(tokens: List[Dict[str, Any]]) -> Dict[str, Any]:
             else:
                 paragraph_buffer, list_buffer, current_list_type = flush_buffer("paragraph", document, paragraph_buffer, list_buffer, current_list_type)
         
-        # stateful
+        # Fenced code block.
         elif strategy_type == "stateful":
             paragraph_buffer, list_buffer, current_list_type = flush_buffer("all", document, paragraph_buffer, list_buffer, current_list_type)
             
@@ -107,7 +106,7 @@ def consume_tokens(tokens: List[Dict[str, Any]]) -> Dict[str, Any]:
                 code_block_state["start_token"] = token
                 code_block_state["content"] = []
         
-        # series
+        # Consecutive list items.
         elif strategy_type == "series":
             paragraph_buffer, list_buffer, current_list_type = flush_buffer("paragraph", document, paragraph_buffer, list_buffer, current_list_type)
             
@@ -124,7 +123,7 @@ def consume_tokens(tokens: List[Dict[str, Any]]) -> Dict[str, Any]:
             else:
                 paragraph_buffer, list_buffer, current_list_type = flush_buffer("list", document, paragraph_buffer, list_buffer, current_list_type)
         
-        # new_line
+        # Blank line.
         elif strategy_type == "new_line":
             paragraph_buffer, list_buffer, current_list_type = flush_buffer("all", document, paragraph_buffer, list_buffer, current_list_type)
     
@@ -165,7 +164,7 @@ def flush_buffer(buffer_type: str, document: Dict[str, Any],
 
 
 def make_inline_nodes(content: str, line: int) -> List[Dict[str, Any]]:
-    """Convert inline tokens to AST nodes without classes or hidden shared state.
+    """Convert inline tokens to AST nodes.
 
     Supported syntax is deliberately a subset of Markdown: one inline level,
     links, images, bold, emphasis and inline code.
@@ -232,14 +231,12 @@ def make_list(buffer: List[Dict[str, Any]], list_type: str | None) -> Dict[str, 
     if not buffer:
         return {"type": "list", "children": [], "line": 0}
     
-    # Determinar si es ordered o unordered
+    # Determine whether the list is ordered.
     strategy = TOKEN_GROUPING_STRATEGY.get(list_type or buffer[0]["type"], {})
     ordered = strategy.get("ordered", False)
     
-    # Obtener línea del primer token
     line_num = buffer[0].get("line", 0) if buffer else 0
     
-    # Crear items
     items = []
     for token in buffer:
         content = token["meta"].get("content", "")

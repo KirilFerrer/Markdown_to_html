@@ -1,4 +1,4 @@
-# specs.py
+"""Token patterns, grouping strategies and validation rules."""
 from typing import Dict, Any, Callable
 import re
 import utils
@@ -10,7 +10,7 @@ INLINE_TOKEN_PATTERNS = {
     "LINK"          : r"\[(?P<text>.+?)\]\((?P<url>[^)]+?)\)",            # [text](url)
     "CODE_INLINE"   : r"`(?P<content>[^`]+?)`",                           # `code`
     "STRONG"        : r"\*\*(?P<content>.+?)\*\*",                       # **text**
-    "EMPHASIS"      : r"\*(?P<content>[^*]+?)\*",                        # *text* (simple, sin bold)
+    "EMPHASIS"      : r"\*(?P<content>[^*]+?)\*",                        # *text* (single emphasis marker)
 }
 
 INLINE_FLUSH_PRIORITY = ["IMAGE", "LINK", "CODE_INLINE", "STRONG", "EMPHASIS"]

@@ -1,12 +1,12 @@
 # Markdown to HTML Converter
 
-A small **Markdown-to-HTML converter with its own lexer, parser, AST, validation rules and HTML renderer**. It can be used from the command line or through a Flet desktop interface.
+A Markdown-to-HTML converter written in Python, with a command-line interface and an optional Flet desktop application.
 
-I developed the conversion engine during my Python specialization course, before working with object-oriented programming. The core intentionally uses functions, dictionaries and lists rather than a class hierarchy. The UI is a separate layer.
+I started this project during my Python specialization course. The conversion engine uses functions, dictionaries and lists, with the desktop UI kept separate from the core.
 
 ## Try it
 
-The **CLI needs only Python 3.10+**; no third-party dependencies are required:
+The CLI requires Python 3.10 or later and has no third-party dependencies:
 
 ~~~bash
 python src/main.py tests/test.md
@@ -27,7 +27,7 @@ python -m pip install -r requirements.txt
 python src/main.py --gui
 ~~~
 
-The GUI uses the Flet 0.23.x API (pinned in requirements.txt). The UI provides file selection, CSS themes, validation messages and HTML export. The CLI still works when Flet is installed: a filename argument selects **CLI mode**, not the GUI.
+The GUI uses the Flet 0.23.x API, pinned in `requirements.txt`. It supports file selection, CSS themes, validation messages and HTML export. Passing a filename selects CLI mode, even if Flet is installed.
 
 ## Supported Markdown
 
@@ -41,7 +41,7 @@ The GUI uses the Flet 0.23.x API (pinned in requirements.txt). The UI provides f
 | `**bold**`, `*emphasis*`, inline backticks | `<strong>`, `<em>`, `<code>` |
 | `[label](url)`, `![alt](url)` | `<a>`, `<img>` |
 
-This implements a **practical Markdown subset**, not the CommonMark specification. Nested lists, tables, complex nested inline styles and advanced Markdown syntax are outside the current scope. No external Markdown parser is used.
+The converter supports a subset of Markdown, not the full CommonMark specification. Nested lists, tables, complex nested inline styles and advanced Markdown syntax are outside the current scope. No external Markdown parser is used.
 
 ## Design
 
@@ -76,7 +76,7 @@ HTML_GEN/*.html or an explicit output path
 | `src/ui.py` | Optional Flet desktop interface |
 | `src/utils.py` / `src/logging_utils.py` | Shared helpers and file logging |
 
-A fresh AST is created for each conversion. Validation produces **non-blocking diagnostics**: the tool still generates HTML so users can inspect the result. Unclosed code fences, missing text and unsafe URLs are among the detected conditions.
+Each conversion creates a fresh AST. Validation reports diagnostics without preventing HTML generation. Unclosed code fences, missing text and unsafe URLs are among the detected conditions.
 
 ### HTML and styles
 
@@ -86,12 +86,17 @@ The GUI offers bundled CSS styles from `css/`. Their relative paths are intended
 
 Generated documents, logs and compiled files are excluded from version control.
 
+## Limitations
 
-## Intentional limitations
-
-- It is not a complete Markdown parser and does not aim for full CommonMark compliance.
 - The validator reports problems but does not rewrite malformed source.
-- The Flet interface is a desktop convenience; the CLI and conversion pipeline are independently usable.
 - AST and HTML exports are stored locally; there is no server component.
 
-**Why this project matters:** it demonstrates lexical analysis, parsing into an intermediate representation, recursive processing, rule-based validation, careful output escaping, separation of concerns and a usable Python CLI.
+## Tests
+
+Run the regression tests from the repository root:
+
+~~~bash
+python -m unittest discover -s tests -p "test_*.py" -v
+~~~
+
+The tests cover conversion, validation, HTML escaping and CLI behavior.

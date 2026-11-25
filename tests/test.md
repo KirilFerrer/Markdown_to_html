@@ -1,44 +1,44 @@
-# Título Principal
+# Main heading
 
-Párrafo inicial con contenido válido.
+A valid opening paragraph.
 
-## Heading de nivel 2 válido
+## Valid level-two heading
 
-Contenido normal.
+Regular content.
 
-#### Heading que salta de nivel (MD001)
-Este heading salta de h2 a h4, salta 2 niveles. **ERROR: MD001**
+#### Skipped heading level (MD001)
+This heading skips level three. **WARNING: MD001**
 
-## Heading sin contenido (MD003)
+## Empty heading (MD003)
 
 ###  
 
-Este heading tiene solo espacios. **ERROR: MD003**
+The heading above contains only spaces. **ERROR: MD003**
 
-## List item vacío (MD006)
+## Empty list item (MD006)
 
 - 
-- Item con contenido válido
+- Valid list item
 - 
 
-## Code block vacío (MD010)
+## Empty code block (MD010)
 
 ```python
 
 ```
 
-Code block sin contenido. **ERROR: MD010**
+The code block is empty. **WARNING: MD010**
 
-## Más ejemplos
+## More examples
 
-### Heading con contenido válido
+### Valid heading
 
-Párrafo con contenido normal.
+A paragraph with regular content.
 
-- Item 1 válido
-- Item 2 válido
-- Item 3 válido
+- Valid item 1
+- Valid item 2
+- Valid item 3
 
-### Otro heading válido
+### Another valid heading
 
-Más contenido aquí.
+More content here.
